@@ -1,0 +1,45 @@
+.first {
+  border-radius: 15px;
+  height: auto;
+  width: 100px;
+  min-height: 300px;
+}
+
+.second {
+  border-radius: 15px;
+  min-height: 300px;
+  height: auto;
+  width: 100px;
+}
+
+.third {
+  border-radius: 15px;
+  height: auto;
+  min-height: 300px;
+  width: 100px;
+}
+
+.moveable {
+  min-height: 50px;
+  opacity: 0.75;
+  background-color: white;
+  border: 1px solid black;
+  border-radius: 15px;
+  padding: 10px;
+  margin: 5px;
+}
+
+.delete-button {
+  float: right;
+}
+
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+.buttons-div {
+  padding: 10px;
+  margin-bottom: 10px;
+}

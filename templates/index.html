@@ -1,0 +1,197 @@
+{% extends 'base.html' %} {% block content %}
+<script>
+ var id = 0;
+
+    function deleteElement(ev) {
+        ev.target.parentNode.remove();
+    }
+
+
+    function checkDuplicate(text){
+      var elements = document.getElementsByClassName("moveable");
+      for (var i = 0; i < elements.length; i++) {
+        if(elements[i].querySelector("p").innerText == text){
+          return true;
+        }
+      }
+    }
+      
+
+
+  function save(ev) {
+    var elements = document.getElementsByClassName("moveable");
+    for (var i = 0; i < elements.length; i++) {
+      var parent = elements[i].parentNode;
+      var classes = parent.getAttribute("class");
+      if (classes.includes("first")) {
+        elements[i].setAttribute("text", elements[i].querySelector("p").innerText + ":first");
+      } else if (classes.includes("second")) {
+        elements[i].setAttribute("text", elements[i].querySelector("p").innerText + ":second");
+      } else if (classes.includes("third")) {
+        elements[i].setAttribute("text", elements[i].querySelector("p").innerText + ":third");
+      }
+    }
+    var elementsArray = Array.from(elements);
+    var elementsText = elementsArray.map(function (element) {
+      var obj =new Object();
+         
+        obj.key = element.getAttribute("text").split(":")[1]
+        
+        obj.value = element.getAttribute("text").split(":")[0] 
+        
+      return obj;
+    });
+    elementsText = { save_data: elementsText };
+
+    var elementsTextJson = JSON.stringify(elementsText);
+    console.log(elementsTextJson);
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+      if (this.readyState == 4 && this.status == 200) {
+        alert("Saved");
+      }
+    };
+    xhttp.open("POST", "/save", true);
+    xhttp.setRequestHeader("Content-type", "application/json");
+    xhttp.send(elementsTextJson);
+  }
+
+  function addElement(ev) {
+    
+    var element = document.createElement("div");
+    textFromInput = document.getElementsByName("textbox")[0].value;
+    if(checkDuplicate(textFromInput)){
+      alert("Duplicate");
+      return;
+    }
+    
+    var paragraph = document.createElement("p");
+    var button = document.createElement("button");
+    button.setAttribute("class", "btn btn-secondary delete-button");
+    button.setAttribute("onclick", "deleteElement(event)");
+    button.appendChild(document.createTextNode("Delete"));
+    paragraph.appendChild(document.createTextNode(textFromInput));
+    paragraph.setAttribute("class", "text-break");
+    element.appendChild(paragraph);
+    element.appendChild(button);
+    element.setAttribute("draggable", "true");
+    element.setAttribute("ondragstart", "drag(event)");
+    element.setAttribute("id", "drag" + id);
+    element.setAttribute("class", "moveable clearfix");
+    document.getElementById("tasklist").appendChild(element);
+    id++;
+  }
+  function allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+  }
+
+  function drop(ev, el) {
+    ev.preventDefault();
+    var data = ev.dataTransfer.getData("text");
+    el.appendChild(document.getElementById(data));
+  }
+
+function load(ev){
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function () {
+    if (this.readyState == 4 && this.status == 200) {
+      var elements = document.getElementsByClassName("moveable");
+      while (elements.length > 0) {
+        elements[0].parentNode.removeChild(elements[0]);
+      }
+      
+      var elementsTextJson = JSON.parse(this.responseText);
+      console.log(elementsTextJson);
+      elementsTextJson = elementsTextJson.load_data;
+      console.log(elementsTextJson);
+      for (var i = 0; i < elementsTextJson.length; i++) {
+        if (checkDuplicate(elementsTextJson[i].value)) {
+          continue;
+        }
+        
+        var element = document.createElement("div");
+        var paragraph = document.createElement("p");
+        var button = document.createElement("button");
+        button.setAttribute("class", "btn btn-secondary delete-button");
+        button.setAttribute("onclick", "deleteElement(event)");
+        button.appendChild(document.createTextNode("Delete"));
+
+        paragraph.appendChild(document.createTextNode(elementsTextJson[i].value));
+        paragraph.setAttribute("class", "text-break clearfix");
+        
+        element.appendChild(paragraph);
+        element.appendChild(button);
+        element.setAttribute("draggable", "true");
+        element.setAttribute("ondragstart", "drag(event)");
+        element.setAttribute("id", "drag" + id);
+        element.setAttribute("class", "moveable clearfix");
+        console.log(elementsTextJson[i].key);
+        if (elementsTextJson[i].key == "first") {
+          document.getElementsByClassName("first")[0].appendChild(element);
+        } else if (elementsTextJson[i].key == "second") {
+          document.getElementsByClassName("second")[0].appendChild(element);
+        } else if (elementsTextJson[i].key == "third") {
+          document.getElementsByClassName("third")[0].appendChild(element);
+        }
+        id++;
+        
+        console.log(elementsTextJson[i].value);
+      }
+    }
+  };
+  xhttp.open("GET", "/load", true);
+  xhttp.send();
+
+
+}
+</script>
+<div class="container">
+    <div class="row">
+    <div class="col-sm">
+      <h1>Kanban board for time management</h1>
+    <p>First enter text into the box and then press new task. After adding you can drag and drop tasks.</p>
+    </div>
+    <div class = "col-sm buttons-div">
+      <button class="btn btn-success" onclick="save(event)">Save</button>
+    <button class="btn btn-warning" onclick="load(event)">Load</button>
+     
+    </div>
+
+    </div>
+    <div class="row">
+        <div class="col-sm">
+            <h2>Todo</h2>
+        </div>
+        <div class="col-sm">
+            <h2>On progress</h2>
+        </div>
+        <div class="col-sm">
+            <h2>Done</h2>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div
+            id="tasklist"
+            class="first bg-warning container col-sm"
+            ondrop="drop(event, this)"
+            ondragover="allowDrop(event)"
+        ></div>
+        <div class="second bg-success container col-sm" ondrop="drop(event, this)" ondragover="allowDrop(event)"></div>
+        <div class="third bg-primary container col-sm" ondrop="drop(event, this)" ondragover="allowDrop(event)"></div>
+    </div>
+</div>
+<div class="container buttons-div">
+  <input type="text" name="textbox", placeholder="Add new task">
+    <button class="btn btn-primary" onclick="addElement(event)">
+        New task
+    </button>
+    
+    
+</div>
+{% endblock content %}
